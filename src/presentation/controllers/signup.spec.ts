@@ -5,7 +5,7 @@ import { InvalidParamError } from '../errors/invalid-param-error'
 
 interface SutTypes {
   sut: SignupController
-  emailValidator: EmailValidator
+  emailValidatorStub: EmailValidator
 }
 
 const makeSut = (): SutTypes => {
@@ -97,7 +97,7 @@ describe('SignupController', () => {
       body: {
         name: 'any_name',
         password: 'any_password',
-        email: 'any_email@mail.com',
+        email: 'invalid_email',
         passwordConfirmation: 'any_password'
       }
     }
@@ -106,5 +106,24 @@ describe('SignupController', () => {
 
     expect(httpResponse.statusCode).toBe(400)
     expect(httpResponse.body).toEqual(new InvalidParamError('email'))
+  })
+
+  test('Should call EmailValidator.isValid with correct email', () => {
+    const { sut, emailValidatorStub } = makeSut()
+
+    const isValidSpy = jest.spyOn(emailValidatorStub, 'isValid')
+
+    const httpRequest = {
+      body: {
+        name: 'any_name',
+        password: 'any_password',
+        email: 'valid_email@mail.com',
+        passwordConfirmation: 'any_password'
+      }
+    }
+
+    sut.handle(httpRequest)
+
+    expect(isValidSpy).toHaveBeenCalledWith(httpRequest.body.email)
   })
 })
